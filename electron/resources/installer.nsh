@@ -65,7 +65,7 @@ FunctionEnd
 Function PhotosInstallDirectoryPageCreate
   Call PhotosEnsureApplicationDirectory
   StrCpy $PhotosUpgradeMode "0"
-  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 photos_install_page_new
+  IfFileExists "$INSTDIR\${PRODUCT_FILENAME}.exe" 0 photos_install_page_new
   StrCpy $PhotosUpgradeMode "1"
 
 photos_install_page_new:
@@ -188,7 +188,7 @@ photos_restore_upgrade_cleanup:
 FunctionEnd
 
 Function PhotosPrepareUpgradeData
-  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" 0 photos_prepare_upgrade_done
+  IfFileExists "$INSTDIR\${PRODUCT_FILENAME}.exe" 0 photos_prepare_upgrade_done
   ; Recover a data backup left by an interrupted earlier upgrade before moving
   ; anything again. If a collision remains, stop rather than risking data loss.
   IfFileExists "$INSTDIR.__upgrade-data\*.*" 0 photos_prepare_upgrade_move
@@ -216,7 +216,10 @@ photos_prepare_upgrade_move:
 photos_prepare_upgrade_done:
 FunctionEnd
 
-Function .onUserAbort
+; MUI owns .onUserAbort for its cancellation-confirmation dialog. .onGUIEnd is
+; invoked both when the user exits and after a successful install, so it safely
+; restores a temporary backup only if installation never reached customInstall.
+Function .onGUIEnd
   Call PhotosRestoreUpgradeData
 FunctionEnd
 
@@ -231,7 +234,7 @@ FunctionEnd
   ; Restore the model/runtime/settings folders moved before the old-version
   ; uninstaller ran. This executes after fresh program files are in place.
   Call PhotosRestoreUpgradeData
-  IfFileExists "$INSTDIR\${APP_EXECUTABLE_FILENAME}" photos_app_files_ready
+  IfFileExists "$INSTDIR\${PRODUCT_FILENAME}.exe" photos_app_files_ready
   MessageBox MB_ICONSTOP|MB_OK "应用文件解压失败，安装已取消。请关闭本安装器后重新运行最新安装包。"
   Abort
 
@@ -248,7 +251,7 @@ photos_app_files_ready:
   ; Windows Explorer's generic-icon cache on the desktop shortcut.
   IfFileExists "$INSTDIR\resources\icon.ico" 0 +5
   Delete "$DESKTOP\${SHORTCUT_NAME}.lnk"
-  CreateShortCut "$DESKTOP\${SHORTCUT_NAME}.lnk" "$INSTDIR\${APP_EXECUTABLE_FILENAME}" "" "$INSTDIR\resources\icon.ico" 0 "" "" "${APP_DESCRIPTION}"
+  CreateShortCut "$DESKTOP\${SHORTCUT_NAME}.lnk" "$INSTDIR\${PRODUCT_FILENAME}.exe" "" "$INSTDIR\resources\icon.ico" 0 "" "" "${APP_DESCRIPTION}"
   ClearErrors
   WinShell::SetLnkAUMI "$DESKTOP\${SHORTCUT_NAME}.lnk" "${APP_ID}"
 !macroend
