@@ -1175,6 +1175,9 @@ function updateCudaRuntimeDialog(info) {
   const path = document.getElementById('cudaRuntimePath');
   const hint = document.getElementById('cudaRuntimeSpaceHint');
   const fileList = document.getElementById('cudaRuntimeFileList');
+  const manualPath = document.getElementById('cudaRuntimeManualPath');
+  const manualButton = document.getElementById('cudaRuntimeManualInstallBtn');
+  const manualButtonLabel = document.getElementById('cudaRuntimeManualInstallLabel');
   const autoButton = document.getElementById('cudaRuntimeAutoBtn');
   const sources = Array.isArray(info && info.sources) ? info.sources : [];
   const domesticSource = sources.find((source) => source.id === 'domestic') || {};
@@ -1186,7 +1189,8 @@ function updateCudaRuntimeDialog(info) {
   if (domestic) domestic.textContent = domesticSource.name || '国内镜像';
   if (global) global.textContent = globalSource.name || 'PyTorch 官方来源';
   if (path) path.textContent = (info && info.runtime_dir) || '运行时目录不可用';
-  if (hint) hint.textContent = '需要约 ' + ((info && info.estimated_space_gib) || 8) + ' GB 可用空间；当前可用 ' + ((info && info.free_space_gib) || 0) + ' GB。';
+  if (hint) hint.textContent = '安装时临时需要约 ' + ((info && info.estimated_space_gib) || 8) + ' GB 可用空间；完成后会自动清理下载包，只保留运行时。当前可用 ' + ((info && info.free_space_gib) || 0) + ' GB。';
+  if (manualPath) manualPath.textContent = (info && info.manual_wheels_dir) || '手动安装文件夹不可用';
   if (fileList) {
     const wheels = (info && info.required_wheels) || [];
     fileList.replaceChildren(...wheels.map((name) => {
@@ -1195,6 +1199,8 @@ function updateCudaRuntimeDialog(info) {
       return item;
     }));
   }
+  if (manualButtonLabel) manualButtonLabel.textContent = info && info.manual_wheels_ready ? '已放好，安装并启用' : '我已放好，安装并启用';
+  if (manualButton) manualButton.disabled = !info || !info.gpu_detected || Boolean(info.runtime_ready);
   if (autoButton) autoButton.disabled = !info || !info.gpu_detected || Boolean(info.runtime_ready);
 }
 
@@ -1231,11 +1237,13 @@ function setCudaRuntimeButton(label, downloading = false) {
   const button = document.getElementById('cudaRuntimeAutoBtn');
   const text = document.getElementById('cudaRuntimeAutoLabel');
   const cancel = document.getElementById('cudaRuntimeCancelBtn');
+  const manualButton = document.getElementById('cudaRuntimeManualInstallBtn');
   if (text) text.textContent = label;
   if (button) {
     button.disabled = downloading;
     button.classList.toggle('is-downloading', downloading);
   }
+  if (manualButton) manualButton.disabled = downloading;
   if (cancel) cancel.textContent = downloading ? (cudaRuntimeCancellationPending ? '正在取消…' : '取消下载') : '暂不安装';
 }
 
@@ -1261,13 +1269,14 @@ async function cancelCudaRuntimeDownload() {
   }
 }
 
-function beginCudaRuntimeDownload() {
+function beginCudaRuntimeInstall(source = 'automatic') {
   let completed = false;
   cudaRuntimeCancellationPending = false;
-  setCudaRuntimeButton('正在连接 0%', true);
+  const manualInstall = source === 'local';
+  setCudaRuntimeButton(manualInstall ? '正在检查手动文件…' : '正在连接 0%', true);
   closeEventSource(cudaRuntimeEventSource);
   try {
-    cudaRuntimeEventSource = new EventSource(baseUrl + '/api/runtime/cuda/events?confirm=1');
+    cudaRuntimeEventSource = new EventSource(baseUrl + '/api/runtime/cuda/events?confirm=1&source=' + encodeURIComponent(source));
     cudaRuntimeEventSource.addEventListener('message', async (event) => {
       if (cudaRuntimeCancellationPending || completed) return;
       try {
@@ -1323,6 +1332,14 @@ function beginCudaRuntimeDownload() {
     setCudaRuntimeButton('自动下载并启用');
     toast('danger', '无法创建 CUDA 下载连接。');
   }
+}
+
+function beginCudaRuntimeDownload() {
+  beginCudaRuntimeInstall('automatic');
+}
+
+function beginCudaRuntimeManualInstall() {
+  beginCudaRuntimeInstall('local');
 }
 
 async function startRemoveBg() {
@@ -1877,6 +1894,7 @@ function initModals() {
   const downloadAutoBtn = document.getElementById('downloadAutoBtn');
   const cudaRuntimeCancelBtn = document.getElementById('cudaRuntimeCancelBtn');
   const cudaRuntimeAutoBtn = document.getElementById('cudaRuntimeAutoBtn');
+  const cudaRuntimeManualInstallBtn = document.getElementById('cudaRuntimeManualInstallBtn');
   const openCudaRuntimeDomesticBtn = document.getElementById('openCudaRuntimeDomesticBtn');
   const openCudaRuntimeGlobalBtn = document.getElementById('openCudaRuntimeGlobalBtn');
   const autoSaveEnabled = document.getElementById('autoSaveEnabled');
@@ -1918,6 +1936,7 @@ function initModals() {
   });
   if (cudaRuntimeCancelBtn) cudaRuntimeCancelBtn.addEventListener('click', cancelCudaRuntimeDownload);
   if (cudaRuntimeAutoBtn) cudaRuntimeAutoBtn.addEventListener('click', beginCudaRuntimeDownload);
+  if (cudaRuntimeManualInstallBtn) cudaRuntimeManualInstallBtn.addEventListener('click', beginCudaRuntimeManualInstall);
   if (openCudaRuntimeDomesticBtn) openCudaRuntimeDomesticBtn.addEventListener('click', () => openCudaRuntimeSource('domestic'));
   if (openCudaRuntimeGlobalBtn) openCudaRuntimeGlobalBtn.addEventListener('click', () => openCudaRuntimeSource('global'));
   if (modelRuntimeNote) modelRuntimeNote.addEventListener('click', () => {

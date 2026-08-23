@@ -544,7 +544,11 @@ def create_app() -> Flask:
         if confirmed not in ("1", "true", "True", "yes"):
             payload = {"event": "error", "message": "请先在 CUDA 提示中确认下载。"}
             return Response(response=iter([f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"]), mimetype="text/event-stream")
-        return Response(response=start_cuda_runtime_download(), mimetype="text/event-stream")
+        source = request.args.get("source", "automatic").strip().lower()
+        if source not in ("automatic", "local"):
+            payload = {"event": "error", "message": "未知的 CUDA 安装来源。"}
+            return Response(response=iter([f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"]), mimetype="text/event-stream")
+        return Response(response=start_cuda_runtime_download(source=source), mimetype="text/event-stream")
 
     @app.route("/api/runtime/cuda/cancel", methods=["POST"])
     def api_cuda_runtime_cancel():

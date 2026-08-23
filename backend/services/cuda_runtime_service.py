@@ -47,6 +47,10 @@ def _site_packages() -> Path:
     return _runtime_root() / "site-packages"
 
 
+def _manual_wheels_dir() -> Path:
+    return _runtime_root() / "manual-wheels"
+
+
 def _runtime_ready() -> bool:
     site_packages = _site_packages()
     return (site_packages / "torch" / "__init__.py").is_file() and (site_packages / "torch" / "lib" / "torch_cuda.dll").is_file()
@@ -98,12 +102,18 @@ def runtime_info() -> dict:
     site_packages = _site_packages()
     ready = _runtime_ready()
     root = _runtime_root()
+    # Older releases kept the downloaded wheel archives after a successful
+    # installation. They are not needed at runtime and can consume several GB.
+    if ready:
+        shutil.rmtree(root / "downloads", ignore_errors=True)
     disk = shutil.disk_usage(_app_root())
     return {
         **_gpu_probe(),
         "runtime_ready": ready,
         "runtime_dir": str(root),
         "site_packages_dir": str(site_packages),
+        "manual_wheels_dir": str(_manual_wheels_dir()),
+        "manual_wheels_ready": all((_manual_wheels_dir() / name).is_file() for name in _wheel_names()),
         "required_wheels": list(_wheel_names()),
         "sources": [
             {"id": "domestic", "name": "阿里云 PyTorch 国内镜像（自动下载默认）", "url": f"https://mirrors.aliyun.com/pytorch-wheels/{CUDA_TAG}/"},
@@ -157,6 +167,7 @@ class CudaRuntimeDownloader:
     def __init__(self) -> None:
         self.root = _runtime_root()
         self.download_dir = self.root / "downloads"
+        self.manual_wheels_dir = _manual_wheels_dir()
         self.site_packages = _site_packages()
         self.cancel_event = threading.Event()
         self.finished_event = threading.Event()
@@ -224,6 +235,21 @@ class CudaRuntimeDownloader:
                     self._response = None
         raise OSError("；".join(failures) or f"无法下载 {filename}")
 
+    def _manual_wheels(self) -> list[Path]:
+        wheels = [self.manual_wheels_dir / filename for filename in _wheel_names()]
+        missing = [wheel.name for wheel in wheels if not wheel.is_file()]
+        if missing:
+            raise OSError(
+                "手动安装文件不完整。请将以下文件直接放入 "
+                + str(self.manual_wheels_dir)
+                + "："
+                + "、".join(missing)
+            )
+        invalid = [wheel.name for wheel in wheels if not zipfile.is_zipfile(wheel)]
+        if invalid:
+            raise OSError("手动安装文件不是有效 wheel：" + "、".join(invalid))
+        return wheels
+
     @staticmethod
     def _extract_wheel(wheel: Path, target: Path, cancel_event: threading.Event) -> None:
         with zipfile.ZipFile(wheel) as archive:
@@ -260,7 +286,12 @@ class CudaRuntimeDownloader:
             if directory.exists():
                 shutil.rmtree(directory, ignore_errors=True)
 
-    def events(self) -> Generator[str, None, None]:
+    def cleanup_manual_wheels(self) -> None:
+        if self.manual_wheels_dir.exists():
+            shutil.rmtree(self.manual_wheels_dir, ignore_errors=True)
+
+    def events(self, source: str = "automatic") -> Generator[str, None, None]:
+        manual_install = source == "local"
         info = runtime_info()
         if info["runtime_ready"]:
             yield _sse({"event": "complete", "message": "CUDA 运行时已就绪。"})
@@ -277,19 +308,32 @@ class CudaRuntimeDownloader:
         progress = _Progress(file_count=len(_wheel_names()))
         result: list[Optional[BaseException]] = [None]
 
+        installed = [False]
+
         def worker() -> None:
             try:
-                wheels = []
-                for index, filename in enumerate(_wheel_names()):
-                    progress.file_index = index
-                    progress.filename = filename
-                    wheels.append(self._download_wheel(filename, progress))
+                if manual_install:
+                    wheels = self._manual_wheels()
+                    progress.queue.put({"event": "installing", "filename": "正在安装手动下载的 CUDA 运行时"})
+                else:
+                    wheels = []
+                    for index, filename in enumerate(_wheel_names()):
+                        progress.file_index = index
+                        progress.filename = filename
+                        wheels.append(self._download_wheel(filename, progress))
                 self._install(wheels, progress)
+                installed[0] = True
             except BaseException as exc:  # caller turns this into an SSE error
                 result[0] = exc
             finally:
-                if self.cancel_event.is_set():
+                # Auto-download wheels are pure installation cache. Always
+                # remove them after a terminal result so runtime/site-packages
+                # is the only retained CUDA copy. Manual wheels stay on an
+                # install error to allow a retry, but are removed on success.
+                if not manual_install or self.cancel_event.is_set():
                     self.cleanup_partial()
+                if manual_install and installed[0]:
+                    self.cleanup_manual_wheels()
                 self.finished_event.set()
                 _unregister(self)
 
@@ -338,8 +382,8 @@ def _unregister(downloader: CudaRuntimeDownloader) -> None:
             _ACTIVE = None
 
 
-def start_cuda_runtime_download() -> Generator[str, None, None]:
-    return CudaRuntimeDownloader().events()
+def start_cuda_runtime_download(source: str = "automatic") -> Generator[str, None, None]:
+    return CudaRuntimeDownloader().events(source=source)
 
 
 def cancel_cuda_runtime_download() -> dict:

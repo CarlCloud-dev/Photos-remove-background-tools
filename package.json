@@ -1,6 +1,6 @@
 {
   "name": "rmbg-desktop",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "整合多种本地模型的智能抠图桌面工具",
   "main": "electron/main.js",
   "config": {

@@ -57,6 +57,7 @@ temp/       临时文件
 2. 运行 `build_all.bat` 并确认安装程序存在。
 3. 在干净环境中完成安装、首次启动、模型下载、CPU 抠图；如发布 CUDA 能力，再验证 CUDA 运行时按需安装。
 4. 将安装程序上传至 GitHub Releases；不要把模型权重、`models/`、`runtime/`、`output/`、`logs/`、`release/` 或 `electron/resources/backend/` 提交到 Git。
+5. 升级测试应在已有模型和 CUDA 运行时的安装目录上直接运行新版安装包，确认程序更新后 `models/`、`runtime/`、`profile/` 等目录仍存在。
 
 ## 常见问题
 

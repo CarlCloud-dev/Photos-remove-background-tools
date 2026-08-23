@@ -710,6 +710,10 @@ body.is-maximized .window-icon-restore { display: block; }
 .model-download-source svg, .model-download-actions svg { width: 14px; height: 14px; }
 .model-download-location code { display: block; margin-top: 7px; overflow-wrap: anywhere; color: var(--control-text); font-family: "Cascadia Mono", Consolas, monospace; font-size: 10px; line-height: 1.6; }
 .model-download-location p { margin: 8px 0 0; color: var(--text-muted); font-size: 10px; line-height: 1.5; }
+.cuda-manual-guide { margin-top: 11px; }
+.cuda-manual-guide ol { margin: 8px 0 8px; padding-left: 18px; color: var(--text-soft); font-size: 10px; line-height: 1.6; }
+.cuda-manual-guide li + li { margin-top: 3px; }
+.cuda-manual-guide li code { color: var(--control-text); font-family: "Cascadia Mono", Consolas, monospace; }
 .model-file-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
 .model-file-list span { padding: 4px 6px; color: #b4bfd3; border: 1px solid rgba(176, 191, 218, 0.12); border-radius: 5px; background: rgba(176, 191, 218, 0.045); font-family: "Cascadia Mono", Consolas, monospace; font-size: 9px; }
 .model-download-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 21px; }

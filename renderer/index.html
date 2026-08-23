@@ -162,7 +162,8 @@
       </div>
       <div class="model-download-location"><span>运行时安装位置</span><code id="cudaRuntimePath">正在获取保存位置…</code><p id="cudaRuntimeSpaceHint">首次安装需要预留约 8 GB 可用空间。</p></div>
       <div class="model-file-list" id="cudaRuntimeFileList" aria-label="CUDA 运行时文件"><span>正在读取所需文件…</span></div>
-      <div class="model-download-actions"><button id="cudaRuntimeCancelBtn" class="btn-secondary" type="button">暂不安装</button><button id="cudaRuntimeAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="cudaRuntimeAutoLabel">自动下载并启用</span></button></div>
+      <div class="model-download-location cuda-manual-guide"><span>手动下载与安装</span><ol><li>打开上方任一 wheel 库，下载上方列出的两个完整 <code>.whl</code> 文件。</li><li>无需解压，将两个文件直接放入下方文件夹，不要额外嵌套目录。</li><li>点击“我已放好，安装并启用”；安装成功后应用会自动删除这两个安装包。</li></ol><code id="cudaRuntimeManualPath">正在获取手动安装文件夹…</code></div>
+      <div class="model-download-actions"><button id="cudaRuntimeCancelBtn" class="btn-secondary" type="button">暂不安装</button><button id="cudaRuntimeManualInstallBtn" class="btn-secondary" type="button"><i data-lucide="package-check"></i><span id="cudaRuntimeManualInstallLabel">我已放好，安装并启用</span></button><button id="cudaRuntimeAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="cudaRuntimeAutoLabel">自动下载并启用</span></button></div>
     </section>
   </div>
   <div id="toastContainer" class="toast-container"></div>
