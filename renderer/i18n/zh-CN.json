@@ -1,0 +1,83 @@
+{
+  "appName": "智能抠图整合工具",
+  "appVersion": "本地多模型版",
+  "topbar": {
+    "title": "智能抠图整合工具",
+    "settingsBtn": "设置",
+    "aboutBtn": "关于"
+  },
+  "left": {
+    "title": "原图预览",
+    "selectBtn": "选择图片",
+    "dropHint": "将图片拖拽到此处，或点击上方按钮选择\n支持 JPG / PNG / BMP / WEBP",
+    "noImage": "尚未选择图片",
+    "imageInfo": "图片尺寸：{w} × {h}"
+  },
+  "middle": {
+    "startBtn": "开始抠图",
+    "processing": "正在处理…",
+    "downloading": "正在下载模型 {p}%",
+    "elapsed": "耗时 {s} 秒",
+    "pleaseSelectFirst": "请先选择一张图片",
+    "resultTip": "抠图完成！请在右侧预览并保存"
+  },
+  "right": {
+    "title": "结果预览",
+    "saveBtn": "保存结果",
+    "noResult": "暂无抠图结果",
+    "saved": "已保存到：{p}"
+  },
+  "logs": {
+    "title": "运行日志",
+    "clearBtn": "清空",
+    "placeholder": "程序运行日志会显示在这里…"
+  },
+  "settings": {
+    "title": "设置",
+    "deviceLabel": "推理硬件：",
+    "deviceAuto": "自动（优先 GPU，否则 CPU）",
+    "deviceCPU": "仅 CPU",
+    "deviceGPU": "优先 GPU（需 NVIDIA 显卡）",
+    "cacheDirLabel": "模型缓存目录：",
+    "browseBtn": "浏览…",
+    "saveBtn": "保存设置",
+    "cancelBtn": "取消",
+    "savedTip": "设置已保存，重启程序后生效"
+  },
+  "about": {
+    "title": "关于",
+    "line1": "本软件整合多个开源抠图模型，支持本地单图与批量处理。",
+    "line2": "各模型遵循其各自的开源许可与使用条款。",
+    "line3": "如需商用，请确认所选模型的许可范围。",
+    "line4": "本软件为本地离线推理，不会上传您的图片到任何服务器。",
+    "closeBtn": "关闭"
+  },
+  "errors": {
+    "1001": "图片文件已损坏或无法读取，请更换其他图片",
+    "1002": "显存不足，请关闭其他占用显存的程序后重试，或在设置中切换为仅 CPU 模式",
+    "1003": "模型文件缺失，请确认网络后重启软件自动下载",
+    "1004": "不支持的图片格式，请使用 JPG / PNG / BMP / WEBP 格式",
+    "1005": "上传的图片过大（最大 50MB），请压缩图片尺寸或更换更小的图片后重试",
+    "1006": "模型下载失败，请检查网络连接后重试",
+    "2001": "运行依赖缺失或版本不兼容，请重新运行 build_all.bat 重建环境",
+    "9999": "服务内部错误，请查看日志或联系开发者",
+    "backendDown": "服务异常，正在自动重启…若多次失败请重启程序",
+    "logsUnavailable": "日志流不可用，将在后端重启后恢复",
+    "downloadError": "下载异常",
+    "networkError": "网络请求失败，请检查后端服务状态",
+    "saveFailed": "保存失败，请重试或检查磁盘空间"
+  },
+  "params": {
+    "title": "抠图参数",
+    "thresholdLabel": "前景阈值",
+    "thresholdDesc": "低于该值的像素视为背景（0=完全保留原概率，默认 0.5）",
+    "featherLabel": "Alpha 羽化半径（像素）",
+    "featherDesc": "值越大边缘越柔和，避免锯齿感（0=关闭，推荐 0~5）",
+    "edgeRefineLabel": "边缘细化强度",
+    "edgeRefineDesc": "对人像头发、毛绒等细节进行增强（0=关闭，推荐 0~2）",
+    "outputModeLabel": "输出模式",
+    "modeRGBA": "透明 PNG（推荐）",
+    "modeCutout": "白底 JPG 合成",
+    "resetBtn": "恢复默认"
+  }
+}

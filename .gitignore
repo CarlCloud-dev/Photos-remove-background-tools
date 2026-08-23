@@ -1,0 +1,53 @@
+# ===== Node / Electron =====
+node_modules/
+# Vite build 输出
+dist/
+# electron-builder 安装包输出
+release/
+# electron-builder 的 PyInstaller 中间产物（由 build_all.bat 生成）
+electron/resources/backend/
+
+# ===== Python =====
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyd
+*.egg-info/
+.pytest_cache/
+# PyInstaller 输出
+backend/dist/
+backend/build/
+*.spec.bak
+
+# ===== 模型 & 数据（体积大）=====
+models/
+output/
+logs/
+# 旧版 RMBG-2.0 手动下载缓存（含 model.safetensors），不再参与运行时加载
+backend/briaai__RMBG-2.0/
+/runtime/
+/temp/
+/profile/
+/config.json
+
+# ===== 系统 / IDE =====
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.trae/
+*.log
+*.tmp
+
+# 本机遗留的构建排错便签，不属于项目源码
+/Chinese
+/delete
+/install
+/needs
+/torch
+/backend/Chinese
+/backend/delete
+/backend/install
+/backend/needs
+/backend/torch

@@ -1,0 +1,1 @@
+# RemoveBG backend services package

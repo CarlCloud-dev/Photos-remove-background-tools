@@ -1,0 +1,82 @@
+{
+  "name": "rmbg-desktop",
+  "version": "1.0.5",
+  "description": "整合多种本地模型的智能抠图桌面工具",
+  "main": "electron/main.js",
+  "config": {
+    "electron_builder_binaries_mirror": "https://npmmirror.com/mirrors/electron-builder-binaries/"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n VITE,ELECTRON -c blue,green \"vite\" \"wait-on tcp:127.0.0.1:49174 && electron .\"",
+    "dev:backend": "backend\\venv\\Scripts\\python.exe backend\\app.py --port 49173",
+    "build:renderer": "vite build",
+    "package": "electron-builder --win nsis",
+    "package:installer": "electron-builder --win nsis",
+    "build": "npm run build:renderer && npm run package",
+    "build:installer": "npm run build:renderer && npm run package:installer"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.4.8",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "lucide": "^1.33.0"
+  },
+  "build": {
+    "appId": "com.rmbg.smart-cutout",
+    "productName": "智能抠图整合工具",
+    "afterPack": "electron/after-pack.js",
+    "directories": {
+      "output": "release",
+      "buildResources": "electron/resources"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/main.js",
+      "electron/preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/resources/backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "electron/resources/icon.ico",
+        "to": "icon.ico"
+      }
+    ],
+    "win": {
+      "icon": "electron/resources/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "sign": null,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-Setup-${arch}.${ext}",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "include": "installer.nsh",
+      "installerIcon": "electron/resources/icon.ico",
+      "uninstallerIcon": "electron/resources/icon.ico",
+      "installerHeaderIcon": "electron/resources/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "智能抠图整合工具",
+      "language": "2052"
+    }
+  }
+}
