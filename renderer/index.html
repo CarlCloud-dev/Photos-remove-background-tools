@@ -19,16 +19,16 @@
     <header class="app-titlebar">
       <div class="app-brand">
         <div class="brand-mark"><img src="./icon.png" alt="" /></div>
-        <div class="brand-copy"><strong>智能抠图整合工具</strong><span>LOCAL AI BACKGROUND REMOVAL</span></div>
+        <div class="brand-copy"><strong data-i18n="brand.name">智能抠图整合工具</strong><span data-i18n="brand.tagline">LOCAL AI BACKGROUND REMOVAL</span></div>
       </div>
 
       <div id="modelSwitcher" class="model-switcher no-drag" role="tablist" aria-label="抠图模型选择">
         <span id="modelTabIndicator" class="model-tab-indicator"></span>
-        <button class="model-tab is-active" type="button" data-model="u2net" role="tab" aria-selected="true"><span>U²-Net</span><small>经典分割</small></button>
-        <button class="model-tab" type="button" data-model="rmbg20" role="tab" aria-selected="false"><span>RMBG-2.0</span><small>官方高精度</small></button>
-        <button class="model-tab" type="button" data-model="birefnet" role="tab" aria-selected="false"><span>BiRefNet</span><small>通用高清</small></button>
-        <button class="model-tab" type="button" data-model="ben2" role="tab" aria-selected="false"><span>BEN2</span><small>边缘精修</small></button>
-        <button class="model-tab" type="button" data-model="inspyrenet" role="tab" aria-selected="false"><span>InSPyReNet</span><small>高分辨率</small></button>
+        <button class="model-tab is-active" type="button" data-model="u2net" role="tab" aria-selected="true"><span>U²-Net</span><small data-i18n="models.u2net.short">经典分割</small></button>
+        <button class="model-tab" type="button" data-model="rmbg20" role="tab" aria-selected="false"><span>RMBG-2.0</span><small data-i18n="models.rmbg20.short">官方高精度</small></button>
+        <button class="model-tab" type="button" data-model="birefnet" role="tab" aria-selected="false"><span>BiRefNet</span><small data-i18n="models.birefnet.short">通用高清</small></button>
+        <button class="model-tab" type="button" data-model="ben2" role="tab" aria-selected="false"><span>BEN2</span><small data-i18n="models.ben2.short">边缘精修</small></button>
+        <button class="model-tab" type="button" data-model="inspyrenet" role="tab" aria-selected="false"><span>InSPyReNet</span><small data-i18n="models.inspyrenet.short">高分辨率</small></button>
       </div>
 
       <div class="window-controls no-drag" aria-label="窗口控制">
@@ -50,7 +50,7 @@
           <strong id="backendBootTitle">正在启动本地推理服务</strong>
           <span id="backendBootDetail">首次打开需要准备本地运行环境，请稍候…</span>
         </div>
-        <button id="backendBootRetryBtn" class="btn-secondary backend-boot-retry" type="button" hidden>重新检测</button>
+        <button id="backendBootRetryBtn" class="btn-secondary backend-boot-retry" type="button" data-i18n="boot.retry" hidden>重新检测</button>
       </section>
     </div>
 
@@ -58,74 +58,75 @@
       <aside class="control-sidebar">
         <div class="sidebar-scroll">
           <div class="sidebar-heading">
-            <div><span class="eyebrow">CONTROL PANEL</span><h1>抠图参数</h1></div>
+            <div><span class="eyebrow" data-i18n="sidebar.eyebrow">CONTROL PANEL</span><h1 data-i18n="sidebar.title">抠图参数</h1></div>
             <div class="sidebar-heading-actions">
               <button id="modelRuntimeNote" class="runtime-inline is-ready" type="button" title="查看当前模型状态或下载模型"><span class="backend-dot"></span><span class="runtime-inline-text">U²-Net · 本地</span></button>
             </div>
           </div>
 
           <section id="modelParamsGroup" class="parameter-group" aria-live="polite" aria-labelledby="modelParamsTitle">
-            <div class="parameter-group-title"><div class="parameter-group-title-copy"><i data-lucide="sliders-horizontal"></i><div><span id="modelParamsTitle">边缘优化</span><small>调节最终透明边缘</small></div></div><button id="resetParamsBtn" class="reset-params-btn" type="button"><i data-lucide="rotate-ccw"></i><span>重置参数</span></button></div>
+            <div class="parameter-group-title"><div class="parameter-group-title-copy"><i data-lucide="sliders-horizontal"></i><div><span id="modelParamsTitle" data-i18n="params.edgeTitle">边缘优化</span><small data-i18n="params.edgeDesc">调节最终透明边缘</small></div></div><button id="resetParamsBtn" class="reset-params-btn" type="button"><i data-lucide="rotate-ccw"></i><span data-i18n="params.reset">重置参数</span></button></div>
             <div id="modelParamsBody"></div>
           </section>
 
         </div>
 
         <nav class="sidebar-nav" aria-label="应用设置">
-          <button id="startBtn" class="btn-start sidebar-start" type="button"><i data-lucide="sparkles"></i><span>开始抠图</span></button>
-          <button id="settingsBtn" class="sidebar-nav-btn" type="button"><i data-lucide="settings-2"></i><span>设置</span><i data-lucide="chevron-right"></i></button>
-          <button id="logsBtn" class="sidebar-nav-btn" type="button"><i data-lucide="scroll-text"></i><span>运行日志</span><i data-lucide="chevron-right"></i></button>
-          <button id="aboutBtn" class="sidebar-nav-btn" type="button"><i data-lucide="circle-help"></i><span>关于</span><i data-lucide="chevron-right"></i></button>
+          <button id="startBtn" class="btn-start sidebar-start" type="button"><i data-lucide="sparkles"></i><span data-i18n="actions.start">开始抠图</span></button>
+          <button id="settingsBtn" class="sidebar-nav-btn" type="button"><i data-lucide="settings-2"></i><span data-i18n="nav.settings">设置</span><i data-lucide="chevron-right"></i></button>
+          <button id="logsBtn" class="sidebar-nav-btn" type="button"><i data-lucide="scroll-text"></i><span data-i18n="nav.logs">运行日志</span><i data-lucide="chevron-right"></i></button>
+          <button id="aboutBtn" class="sidebar-nav-btn" type="button"><i data-lucide="circle-help"></i><span data-i18n="nav.about">关于</span><i data-lucide="chevron-right"></i></button>
         </nav>
 
         <section id="settingsModal" class="modal side-view" style="display:none" aria-label="设置">
-          <div class="side-view-header"><button id="settingsCancelBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow">PREFERENCES</span><h2>应用设置</h2></div></div>
+          <div class="side-view-header"><button id="settingsCancelBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow" data-i18n="settings.eyebrow">PREFERENCES</span><h2 data-i18n="settings.title">应用设置</h2></div></div>
           <div class="side-view-body">
+            <div class="form-group language-setting-row"><div><span class="form-label" data-i18n="settings.languageLabel">界面语言</span><p data-i18n="settings.languageHint">可随时切换，重启后仍会保持。</p></div><div id="settingsLanguagePicker" class="language-toggle" role="group" aria-label="界面语言"><button type="button" data-locale="zh-CN">简体中文</button><button type="button" data-locale="en-US">English</button></div></div>
             <div class="form-group">
-              <span id="deviceSelectLabel" class="form-label">推理硬件</span>
+              <span id="deviceSelectLabel" class="form-label" data-i18n="settings.deviceLabel">推理硬件</span>
               <div id="deviceSelect" class="device-select-wrap">
                 <button id="deviceSelectTrigger" class="device-select-trigger" type="button" aria-labelledby="deviceSelectLabel deviceSelectValue" aria-haspopup="listbox" aria-expanded="false" data-value="cpu"><span id="deviceSelectValue">仅使用 CPU</span><i data-lucide="chevron-down" aria-hidden="true"></i></button>
                 <div id="deviceOptions" class="device-options" role="listbox" aria-label="推理硬件选项" aria-hidden="true">
-                  <button class="device-option is-selected" type="button" role="option" aria-selected="true" data-device-value="cpu"><i data-lucide="cpu"></i><span><strong>仅使用 CPU</strong><small>默认模式，兼容性优先</small></span><i class="device-option-check" data-lucide="check"></i></button>
-                  <button class="device-option" type="button" role="option" aria-selected="false" data-device-value="cuda"><i data-lucide="zap"></i><span><strong>使用 CUDA 加速</strong><small>检测到 NVIDIA CUDA 后可启用</small></span><i class="device-option-check" data-lucide="check"></i></button>
+                  <button class="device-option is-selected" type="button" role="option" aria-selected="true" data-device-value="cpu"><i data-lucide="cpu"></i><span><strong data-i18n="settings.cpu">仅使用 CPU</strong><small data-i18n="settings.cpuHint">默认模式，兼容性优先</small></span><i class="device-option-check" data-lucide="check"></i></button>
+                  <button class="device-option" type="button" role="option" aria-selected="false" data-device-value="cuda"><i data-lucide="zap"></i><span><strong data-i18n="settings.cuda">使用 CUDA 加速</strong><small data-i18n="settings.cudaHint">检测到 NVIDIA CUDA 后可启用</small></span><i class="device-option-check" data-lucide="check"></i></button>
                 </div>
               </div>
-              <p class="device-select-hint">当前发行版默认使用 CPU；未安装 CUDA 加速组件时将保持 CPU。</p>
-              <div id="deviceStatus" class="device-status" role="status" aria-live="polite"><span class="device-status-dot"></span><div><strong id="deviceStatusTitle">正在检测推理环境</strong><small id="deviceStatusDetail">将显示实际使用的设备</small></div></div>
+              <p class="device-select-hint" data-i18n="settings.deviceHint">当前发行版默认使用 CPU；未安装 CUDA 加速组件时将保持 CPU。</p>
+              <div id="deviceStatus" class="device-status" role="status" aria-live="polite"><span class="device-status-dot"></span><div><strong id="deviceStatusTitle" data-i18n="settings.detecting">正在检测推理环境</strong><small id="deviceStatusDetail" data-i18n="settings.detectingHint">将显示实际使用的设备</small></div></div>
             </div>
-            <div class="form-group setting-toggle-row"><div><label class="form-label" for="autoSaveEnabled">自动保存结果</label><p>完成后直接导出 PNG 到源图片所在文件夹。</p></div><label class="setting-switch" aria-label="自动保存结果"><input id="autoSaveEnabled" type="checkbox" /><span aria-hidden="true"></span></label></div>
-            <div class="form-group setting-danger-row"><div><span class="form-label">清除图片缓存</span><p>永久删除应用 output 文件夹中的结果图片，不会删除源图片、模型或日志。</p></div><button id="clearOutputCacheBtn" class="btn-secondary setting-danger-btn" type="button"><i data-lucide="trash-2"></i>清除图片缓存</button></div>
+            <div class="form-group setting-toggle-row"><div><label class="form-label" for="autoSaveEnabled" data-i18n="settings.autoSave">自动保存结果</label><p data-i18n="settings.autoSaveHint">完成后直接导出 PNG 到源图片所在文件夹。</p></div><label class="setting-switch" aria-label="自动保存结果"><input id="autoSaveEnabled" type="checkbox" /><span aria-hidden="true"></span></label></div>
+            <div class="form-group setting-danger-row"><div><span class="form-label" data-i18n="settings.clearCache">清除图片缓存</span><p data-i18n="settings.clearCacheHint">永久删除应用 output 文件夹中的结果图片，不会删除源图片、模型或日志。</p></div><button id="clearOutputCacheBtn" class="btn-secondary setting-danger-btn" type="button"><i data-lucide="trash-2"></i><span data-i18n="settings.clearCache">清除图片缓存</span></button></div>
           </div>
-          <div class="side-view-actions"><button id="settingsSaveBtn" class="btn-primary" type="button">保存设置</button></div>
+          <div class="side-view-actions"><button id="settingsSaveBtn" class="btn-primary" type="button" data-i18n="settings.save">保存设置</button></div>
         </section>
 
         <section id="logsModal" class="modal side-view" style="display:none" aria-label="运行日志">
-          <div class="side-view-header"><button id="logsCloseBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow">LOCAL ACTIVITY</span><h2>运行日志</h2></div></div>
-          <div class="side-view-body logs-view-body"><div class="logs-toolbar"><span>仅本地记录</span><button id="clearBtn" class="text-action" type="button">清空</button></div><div id="logsContent" class="logs-content"></div></div>
+          <div class="side-view-header"><button id="logsCloseBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow" data-i18n="logs.eyebrow">LOCAL ACTIVITY</span><h2 data-i18n="logs.title">运行日志</h2></div></div>
+          <div class="side-view-body logs-view-body"><div class="logs-toolbar"><span data-i18n="logs.localOnly">仅本地记录</span><button id="clearBtn" class="text-action" type="button" data-i18n="actions.clear">清空</button></div><div id="logsContent" class="logs-content"></div></div>
         </section>
 
         <section id="aboutModal" class="modal side-view" style="display:none" aria-label="关于智能抠图整合工具">
-          <div class="side-view-header"><button id="aboutCloseBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow">ABOUT</span><h2>智能抠图整合工具</h2></div></div>
-          <div class="side-view-body about-content"><div class="about-logo"><img src="./icon.png" alt="" /></div><p>整合 U²-Net、RMBG-2.0、BiRefNet、BEN2 与 InSPyReNet 等本地模型，提供单图、批量抠图与边缘精修能力。</p><dl><div><dt>处理方式</dt><dd>本地离线推理</dd></div><div><dt>图片隐私</dt><dd>不会上传至服务器</dd></div><div><dt>模型来源</dt><dd>开源社区模型</dd></div></dl></div>
+          <div class="side-view-header"><button id="aboutCloseBtn" class="icon-action" type="button" aria-label="返回"><i data-lucide="arrow-left"></i></button><div><span class="eyebrow" data-i18n="about.eyebrow">ABOUT</span><h2 data-i18n="brand.name">智能抠图整合工具</h2></div></div>
+          <div class="side-view-body about-content"><div class="about-logo"><img src="./icon.png" alt="" /></div><p data-i18n="about.description">整合 U²-Net、RMBG-2.0、BiRefNet、BEN2 与 InSPyReNet 等本地模型，提供单图、批量抠图与边缘精修能力。</p><dl><div><dt data-i18n="about.processing">处理方式</dt><dd data-i18n="about.local">本地离线推理</dd></div><div><dt data-i18n="about.privacy">图片隐私</dt><dd data-i18n="about.noUpload">不会上传至服务器</dd></div><div><dt data-i18n="about.models">模型来源</dt><dd data-i18n="about.openSource">开源社区模型</dd></div></dl></div>
         </section>
       </aside>
 
       <main class="canvas-workspace">
         <section id="dropZone" class="preview-stage" tabindex="0" aria-label="图片预览和拖放区域">
           <span id="leftInfo" class="sr-only">等待导入图片</span>
-          <div class="canvas-actions canvas-actions-floating"><button id="selectBtn" class="btn-secondary toolbar-btn" type="button"><i data-lucide="image-up"></i>导入图片</button><button id="batchBtn" class="btn-secondary toolbar-btn toolbar-batch" type="button"><i data-lucide="layers-3"></i><span id="batchBtnLabel">批量抠图</span></button><button id="saveBtn" class="btn-primary toolbar-btn" type="button" disabled><i data-lucide="download"></i>导出 PNG</button></div>
-          <div id="leftEmpty" class="empty-state"><div class="empty-icon"><i data-lucide="image-plus"></i></div><h3>拖入你的图片</h3><p>或点击右上方「导入图片」<br />支持 JPG、PNG、BMP、WEBP，最大 50 MB</p></div>
+          <div class="canvas-actions canvas-actions-floating"><button id="selectBtn" class="btn-secondary toolbar-btn" type="button"><i data-lucide="image-up"></i><span data-i18n="actions.import">导入图片</span></button><button id="batchBtn" class="btn-secondary toolbar-btn toolbar-batch" type="button"><i data-lucide="layers-3"></i><span id="batchBtnLabel" data-i18n="actions.batch">批量抠图</span></button><button id="saveBtn" class="btn-primary toolbar-btn" type="button" disabled><i data-lucide="download"></i><span data-i18n="actions.export">导出 PNG</span></button></div>
+          <div id="leftEmpty" class="empty-state"><div class="empty-icon"><i data-lucide="image-plus"></i></div><h3 data-i18n="canvas.dropTitle">拖入你的图片</h3><p data-i18n-html="canvas.dropHint">或点击右上方「导入图片」<br />支持 JPG、PNG、BMP、WEBP，最大 50 MB</p></div>
           <div id="compareViewport" class="compare-viewport" aria-label="原图与抠图结果对比">
             <img id="leftPreviewImg" class="compare-image compare-before" alt="原始图片" style="display:none" />
             <div id="afterLayer" class="compare-after-layer"><img id="rightPreviewImg" class="compare-image compare-after" alt="抠图结果" style="display:none" /></div>
             <div id="compareDivider" class="compare-divider"><button id="compareHandle" class="compare-handle" type="button" aria-label="拖动查看前后对比" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><i data-lucide="arrow-left-right"></i></button></div>
             <div id="previewBackdropSwitcher" class="compare-background-switcher" role="group" aria-label="预览底色">
-              <button type="button" data-preview-backdrop="light" aria-pressed="false">浅底色</button>
-              <button type="button" data-preview-backdrop="dark" aria-pressed="false">深底色</button>
+              <button type="button" data-preview-backdrop="light" aria-pressed="false" data-i18n="canvas.lightBackdrop">浅底色</button>
+              <button type="button" data-preview-backdrop="dark" aria-pressed="false" data-i18n="canvas.darkBackdrop">深底色</button>
             </div>
-            <span class="compare-label compare-label-after">抠图结果</span><div id="rightEmpty" style="display:none"></div>
+            <span class="compare-label compare-label-after" data-i18n="canvas.result">抠图结果</span><div id="rightEmpty" style="display:none"></div>
           </div>
-          <div id="processingOverlay" class="processing-overlay" aria-live="polite"><div class="processing-pulse"><i data-lucide="scan-search"></i></div><strong id="processingTitle">正在分离主体与背景</strong><span id="stageProgressText">正在准备任务…</span><div class="batch-progress-track" aria-hidden="true"><span id="batchProgressBar"></span></div></div>
+          <div id="processingOverlay" class="processing-overlay" aria-live="polite"><div class="processing-pulse"><i data-lucide="scan-search"></i></div><strong id="processingTitle" data-i18n="processing.separating">正在分离主体与背景</strong><span id="stageProgressText" data-i18n="processing.preparing">正在准备任务…</span><div class="batch-progress-track" aria-hidden="true"><span id="batchProgressBar"></span></div></div>
         </section>
       </main>
     </div>
@@ -136,34 +137,46 @@
   <div id="downloadModal" class="model-download-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="downloadModalTitle">
     <section class="model-download-dialog">
       <div class="model-download-copy">
-        <span class="eyebrow">MODEL REQUIRED</span>
+        <span class="eyebrow" data-i18n="downloads.modelRequired">MODEL REQUIRED</span>
         <h2 id="downloadModalTitle">需要下载 RMBG-2.0 模型</h2>
-        <p>模型尚未保存到本机。可选择国内下载或国外官方来源手动下载；自动下载始终优先使用国内来源。</p>
+        <p data-i18n="downloads.modelDescription">模型尚未保存到本机。可选择国内下载或国外官方来源手动下载；自动下载始终优先使用国内来源。</p>
       </div>
       <div class="model-download-sources" aria-label="模型下载来源">
-        <div class="model-download-source"><div><span>国内下载</span><strong id="modelDownloadDomesticSource">ModelScope 国内镜像</strong></div><button id="openDomesticModelSourceBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i>打开国内下载</button></div>
-        <div class="model-download-source"><div><span>国外官方</span><strong id="modelDownloadGlobalSource">正在获取来源…</strong></div><button id="openGlobalModelSourceBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i>打开国外官方</button></div>
+        <div class="model-download-source"><div><span data-i18n="downloads.domestic">国内下载</span><strong id="modelDownloadDomesticSource">ModelScope 国内镜像</strong></div><button id="openDomesticModelSourceBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i><span data-i18n="downloads.openDomestic">打开国内下载</span></button></div>
+        <div class="model-download-source"><div><span data-i18n="downloads.global">国外官方</span><strong id="modelDownloadGlobalSource">正在获取来源…</strong></div><button id="openGlobalModelSourceBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i><span data-i18n="downloads.openGlobal">打开国外官方</span></button></div>
       </div>
       <div class="model-download-location"><span>手动下载后的保存位置</span><code id="modelDownloadPath">正在获取保存位置…</code><p>请将下方列出的全部文件直接放入此文件夹，不要再额外嵌套一层目录。</p></div>
       <div class="model-file-list" aria-label="需要的模型文件"><span>正在读取当前模型所需文件…</span></div>
-      <div class="model-download-actions"><button id="downloadCancelBtn" class="btn-secondary" type="button">暂不下载</button><button id="checkModelBtn" class="btn-secondary" type="button"><i data-lucide="refresh-cw"></i>我已放好，重新检测</button><button id="downloadAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="downloadAutoLabel">自动下载</span></button></div>
+      <div class="model-download-actions"><button id="downloadCancelBtn" class="btn-secondary" type="button" data-i18n="downloads.notNow">暂不下载</button><button id="checkModelBtn" class="btn-secondary" type="button"><i data-lucide="refresh-cw"></i><span data-i18n="downloads.checkAgain">我已放好，重新检测</span></button><button id="downloadAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="downloadAutoLabel" data-i18n="downloads.auto">自动下载</span></button></div>
     </section>
   </div>
   <div id="cudaRuntimeModal" class="model-download-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="cudaRuntimeModalTitle">
     <section class="model-download-dialog">
       <div class="model-download-copy">
-        <span class="eyebrow">CUDA RUNTIME</span>
-        <h2 id="cudaRuntimeModalTitle">需要安装 CUDA 加速运行时</h2>
-        <p id="cudaRuntimeModalDescription">基础版保持轻量 CPU 推理。安装后将下载 PyTorch CUDA 运行时，并自动重启应用以启用 GPU。</p>
+        <span class="eyebrow" data-i18n="cuda.eyebrow">CUDA RUNTIME</span>
+        <h2 id="cudaRuntimeModalTitle" data-i18n="cuda.title">需要安装 CUDA 加速运行时</h2>
+        <p id="cudaRuntimeModalDescription" data-i18n="cuda.description">基础版保持轻量 CPU 推理。安装后将下载 PyTorch CUDA 运行时，并自动重启应用以启用 GPU。</p>
       </div>
       <div class="model-download-sources" aria-label="CUDA 运行时下载来源">
-        <div class="model-download-source"><div><span>国内镜像</span><strong id="cudaRuntimeDomesticSource">正在获取来源…</strong></div><button id="openCudaRuntimeDomesticBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i>打开国内镜像</button></div>
-        <div class="model-download-source"><div><span>官方来源</span><strong id="cudaRuntimeGlobalSource">正在获取来源…</strong></div><button id="openCudaRuntimeGlobalBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i>打开官方来源</button></div>
+        <div class="model-download-source"><div><span data-i18n="cuda.domestic">国内镜像</span><strong id="cudaRuntimeDomesticSource">正在获取来源…</strong></div><button id="openCudaRuntimeDomesticBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i><span data-i18n="cuda.openDomestic">打开国内镜像</span></button></div>
+        <div class="model-download-source"><div><span data-i18n="cuda.official">官方来源</span><strong id="cudaRuntimeGlobalSource">正在获取来源…</strong></div><button id="openCudaRuntimeGlobalBtn" class="btn-secondary" type="button"><i data-lucide="external-link"></i><span data-i18n="cuda.openOfficial">打开官方来源</span></button></div>
       </div>
-      <div class="model-download-location"><span>运行时安装位置</span><code id="cudaRuntimePath">正在获取保存位置…</code><p id="cudaRuntimeSpaceHint">首次安装需要预留约 8 GB 可用空间。</p></div>
+      <div class="model-download-location"><span data-i18n="cuda.location">运行时安装位置</span><code id="cudaRuntimePath">正在获取保存位置…</code><p id="cudaRuntimeSpaceHint" data-i18n="cuda.space">首次安装需要预留约 8 GB 可用空间。</p></div>
       <div class="model-file-list" id="cudaRuntimeFileList" aria-label="CUDA 运行时文件"><span>正在读取所需文件…</span></div>
-      <div class="model-download-location cuda-manual-guide"><span>手动下载与安装</span><ol><li>打开上方任一 wheel 库，下载上方列出的两个完整 <code>.whl</code> 文件。</li><li>无需解压，将两个文件直接放入下方文件夹，不要额外嵌套目录。</li><li>点击“我已放好，安装并启用”；安装成功后应用会自动删除这两个安装包。</li></ol><code id="cudaRuntimeManualPath">正在获取手动安装文件夹…</code></div>
-      <div class="model-download-actions"><button id="cudaRuntimeCancelBtn" class="btn-secondary" type="button">暂不安装</button><button id="cudaRuntimeManualInstallBtn" class="btn-secondary" type="button"><i data-lucide="package-check"></i><span id="cudaRuntimeManualInstallLabel">我已放好，安装并启用</span></button><button id="cudaRuntimeAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="cudaRuntimeAutoLabel">自动下载并启用</span></button></div>
+      <div class="model-download-location cuda-manual-guide"><span data-i18n="cuda.manual">手动下载与安装</span><ol><li data-i18n="cuda.manualStep1">打开上方任一 wheel 库，下载上方列出的两个完整 .whl 文件。</li><li data-i18n="cuda.manualStep2">无需解压，将两个文件直接放入下方文件夹，不要额外嵌套目录。</li><li data-i18n="cuda.manualStep3">点击“我已放好，安装并启用”；安装成功后应用会自动删除这两个安装包。</li></ol><code id="cudaRuntimeManualPath">正在获取手动安装文件夹…</code></div>
+      <div class="model-download-actions"><button id="cudaRuntimeCancelBtn" class="btn-secondary" type="button" data-i18n="cuda.cancel">暂不安装</button><button id="cudaRuntimeManualInstallBtn" class="btn-secondary" type="button"><i data-lucide="package-check"></i><span id="cudaRuntimeManualInstallLabel" data-i18n="cuda.manualInstall">我已放好，安装并启用</span></button><button id="cudaRuntimeAutoBtn" class="btn-primary" type="button"><i data-lucide="download"></i><span id="cudaRuntimeAutoLabel" data-i18n="cuda.auto">自动下载并启用</span></button></div>
+    </section>
+  </div>
+  <div id="languageModal" class="language-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="languageModalTitle">
+    <section class="language-dialog">
+      <div class="language-dialog-mark"><img src="./icon.png" alt="" /></div>
+      <span class="eyebrow">WELCOME</span>
+      <h2 id="languageModalTitle">选择界面语言</h2>
+      <p id="languageModalDescription">你可以稍后在“设置”中随时切换。</p>
+      <div id="startupLanguagePicker" class="language-choice-list" role="group" aria-label="选择界面语言">
+        <button type="button" data-locale="zh-CN"><strong>简体中文</strong><small>Chinese (Simplified)</small></button>
+        <button type="button" data-locale="en-US"><strong>English</strong><small>English (United States)</small></button>
+      </div>
     </section>
   </div>
   <div id="toastContainer" class="toast-container"></div>

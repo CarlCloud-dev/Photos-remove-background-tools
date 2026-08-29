@@ -5,6 +5,11 @@ const baseUrl = (window.backendAPI && window.backendAPI.baseUrl)
   ? window.backendAPI.baseUrl
   : 'http://127.0.0.1:49173';
 let i18n = {};
+const DEFAULT_LOCALE = 'zh-CN';
+const SUPPORTED_LOCALES = new Set(['zh-CN', 'en-US']);
+const LOCALE_STORAGE_KEY = 'rmbg-language';
+let currentLocale = DEFAULT_LOCALE;
+let startupLanguageResolver = null;
 let fileRef = null;
 let sourceFilePath = null;
 let outputPath = null;
@@ -60,7 +65,99 @@ function applyI18n() {
     const key = el.getAttribute('data-i18n-placeholder');
     el.setAttribute('placeholder', t(key));
   });
-  document.title = t('topbar.title');
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    el.setAttribute('aria-label', t(key));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    el.setAttribute('title', t(key));
+  });
+  document.documentElement.lang = currentLocale;
+  document.title = t('brand.name');
+}
+
+function normalizeLocale(value) {
+  return SUPPORTED_LOCALES.has(value) ? value : DEFAULT_LOCALE;
+}
+
+function getSavedLocale() {
+  try {
+    const direct = localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (SUPPORTED_LOCALES.has(direct)) return direct;
+    const legacy = readSettings().locale;
+    return SUPPORTED_LOCALES.has(legacy) ? legacy : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function updateLanguageControls() {
+  document.querySelectorAll('[data-locale]').forEach((button) => {
+    const active = button.dataset.locale === currentLocale;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+function renderLanguageDialog() {
+  const title = document.getElementById('languageModalTitle');
+  const description = document.getElementById('languageModalDescription');
+  if (title) title.textContent = t('languagePicker.title');
+  if (description) description.textContent = t('languagePicker.description');
+}
+
+async function setLanguage(locale, persist = true) {
+  const nextLocale = normalizeLocale(locale);
+  const loaded = await loadI18n(nextLocale);
+  if (!loaded) return false;
+  currentLocale = nextLocale;
+  applyI18n();
+  renderLanguageDialog();
+  updateLanguageControls();
+  if (persist) {
+    try { localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale); } catch (_) {}
+    persistSettings({ locale: nextLocale });
+  }
+  if (document.getElementById('modelParamsBody')?.childElementCount) {
+    renderModelParameterPanel(MODEL_META[activeModelId]);
+    syncBatchSelectionUi();
+    setSelectedDevice(getSelectedDevice());
+  }
+  return true;
+}
+
+function initLanguageControls() {
+  document.querySelectorAll('#startupLanguagePicker [data-locale], #settingsLanguagePicker [data-locale]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const applied = await setLanguage(button.dataset.locale);
+      if (!applied) return;
+      const modal = document.getElementById('languageModal');
+      if (modal && modal.style.display !== 'none') closeModal('languageModal');
+      if (startupLanguageResolver) {
+        startupLanguageResolver();
+        startupLanguageResolver = null;
+      }
+    });
+  });
+}
+
+async function initializeLanguage() {
+  initLanguageControls();
+  const savedLocale = getSavedLocale();
+  if (savedLocale) {
+    await setLanguage(savedLocale, false);
+    return;
+  }
+  // Render the Chinese fallback dictionary beneath the picker so the first
+  // launch remains comprehensible even before the user chooses a language.
+  await setLanguage(DEFAULT_LOCALE, false);
+  openModal('languageModal');
+  await new Promise((resolve) => { startupLanguageResolver = resolve; });
 }
 
 // ============== Toast ==============
@@ -129,10 +226,10 @@ async function waitForBackendReady() {
     const elapsedSeconds = Math.floor((Date.now() - backendBootStartedAt) / 1000);
     const isSlow = elapsedSeconds >= 20;
     renderBackendBootState({
-      title: isSlow ? '本地推理环境仍在准备' : '正在启动本地推理服务',
+      title: isSlow ? t('boot.preparing') : t('boot.starting'),
       detail: isSlow
-        ? `已等待 ${elapsedSeconds} 秒；首次安装或 CUDA 运行时加载会更久，请继续等待。`
-        : '正在连接本地服务，服务就绪后将自动检查模型。',
+        ? t('boot.slowDetail', { seconds: elapsedSeconds })
+        : t('boot.startingDetail'),
       slow: isSlow,
       retry: isSlow
     });
@@ -154,10 +251,10 @@ function setProgress(p) {
   const pct = Math.max(0, Math.min(100, p));
   const stageText = document.getElementById('stageProgressText');
   const startBtn = document.getElementById('startBtn');
-  if (stageText) stageText.textContent = pct > 0 ? ('正在处理图片 · ' + Math.round(pct) + '%') : '正在准备任务…';
+  if (stageText) stageText.textContent = pct > 0 ? t('processing.image', { percent: Math.round(pct) }) : t('processing.preparing');
   if (startBtn && startBtn.classList.contains('is-processing')) {
     startBtn.style.setProperty('--task-progress', pct.toFixed(1) + '%');
-    setStartButtonLabel('正在抠图 · ' + Math.round(pct) + '%');
+    setStartButtonLabel(t('processing.removing', { percent: Math.round(pct) }));
   }
 }
 
@@ -181,7 +278,7 @@ function resetProgress() {
   taskProgressValue = 0;
   const stageText = document.getElementById('stageProgressText');
   const startBtn = document.getElementById('startBtn');
-  if (stageText) stageText.textContent = '正在准备任务…';
+  if (stageText) stageText.textContent = t('processing.preparing');
   if (startBtn) startBtn.style.removeProperty('--task-progress');
 }
 
@@ -209,7 +306,7 @@ function setBatchProgress(current, total, filename) {
   const percent = total ? (completed / total) * 100 : 0;
   if (stage) stage.style.setProperty('--batch-progress', percent.toFixed(2) + '%');
   if (progressBar) progressBar.style.width = percent.toFixed(2) + '%';
-  setProcessingOverlay('正在批量抠图', '第 ' + current + ' / ' + total + ' 张 · ' + filename);
+  setProcessingOverlay(t('processing.batch'), t('processing.batchProgress', { current, total, filename }));
 }
 
 function prepareBatchPreview() {
@@ -240,13 +337,13 @@ function finishBatchPreview(successCount, totalCount, outputDirectory) {
   const progressBar = document.getElementById('batchProgressBar');
   if (stage) stage.style.setProperty('--batch-progress', '100%');
   if (progressBar) progressBar.style.width = '100%';
-  setProcessingOverlay('批量抠图完成', '已完成 ' + successCount + ' / ' + totalCount + ' 张' + (outputDirectory ? ' · 已保存至抠图结果文件夹' : ''));
+  setProcessingOverlay(t('processing.batchComplete'), t('processing.batchSummary', { success: successCount, total: totalCount, saved: outputDirectory ? ' · ' + t('canvas.result') : '' }));
   clearBatchOverlayTimer();
   batchOverlayTimer = window.setTimeout(() => {
     if (batchProcessing) return;
     if (stage) stage.classList.remove('is-batch-processing');
     setPreviewProcessing(false);
-    setProcessingOverlay('正在分离主体与背景', '正在准备任务…');
+    setProcessingOverlay(t('processing.separating'), t('processing.preparing'));
     batchOverlayTimer = null;
   }, 1500);
 }
@@ -290,8 +387,8 @@ function setStartButtonLabel(label) {
 }
 
 function getStartActionLabel() {
-  if (!activeModelIsReady()) return '模型待接入';
-  return batchFiles.length ? '开始批量抠图' : '开始抠图';
+  if (!activeModelIsReady()) return t('actions.modelUnavailable');
+  return batchFiles.length ? t('actions.startBatch') : t('actions.start');
 }
 
 function syncBatchSelectionUi() {
@@ -303,10 +400,10 @@ function syncBatchSelectionUi() {
 
   if (batchBtn) {
     batchBtn.classList.toggle('is-batch-selected', hasSelection);
-    batchBtn.title = hasSelection ? ('已选择 ' + selectedCount + ' 张图片，点击取消文件') : '选择多张图片进行批量抠图';
+    batchBtn.title = hasSelection ? t('batch.selectedTitle', { count: selectedCount }) : t('batch.selectTitle');
     batchBtn.setAttribute('aria-label', batchBtn.title);
   }
-  if (batchBtnLabel) batchBtnLabel.textContent = hasSelection ? '取消文件' : '批量抠图';
+  if (batchBtnLabel) batchBtnLabel.textContent = hasSelection ? t('actions.cancelFiles') : t('actions.batch');
   if (!batchProcessing && document.body.dataset.removeBgPending !== '1') {
     if (startBtn) startBtn.disabled = !backendReady || !activeModelIsReady();
     setStartButtonLabel(getStartActionLabel());
@@ -319,24 +416,24 @@ function clearBatchSelection(notify = false) {
   const batchFileInput = document.getElementById('batchFileInput');
   if (batchFileInput) batchFileInput.value = '';
   syncBatchSelectionUi();
-  if (notify && hadSelection) toast('info', '已取消待处理的批量文件。');
+  if (notify && hadSelection) toast('info', t('batch.cancelled'));
 }
 
 function queueBatchFiles(files) {
   const selectedFiles = Array.isArray(files) ? files : [];
   const validFiles = selectedFiles.filter((file) => file && file.type.startsWith('image/') && file.size <= 50 * 1024 * 1024);
   if (!validFiles.length) {
-    toast('warn', '请选择至少一张不超过 50 MB 的图片。');
+    toast('warn', t('batch.selectAtLeast'));
     return;
   }
   if (validFiles.some((file) => !getSourceFilePath(file))) {
-    toast('warn', '无法读取源图片路径，请重启桌面应用后再使用批量抠图。');
+    toast('warn', t('batch.missingPath'));
     return;
   }
   batchFiles = validFiles;
   syncBatchSelectionUi();
-  toast('success', '已选择 ' + validFiles.length + ' 张图片，点击“开始批量抠图”后执行。');
-  if (validFiles.length !== selectedFiles.length) toast('warn', '已跳过不支持或超过 50 MB 的文件。');
+  toast('success', t('batch.selected', { count: validFiles.length }));
+  if (validFiles.length !== selectedFiles.length) toast('warn', t('batch.skipped'));
 }
 
 // ============== 日志 ==============
@@ -636,28 +733,28 @@ const MODEL_META = {
   u2net: {
     label: 'U²-Net',
     fileTag: 'U2Net',
-    runtime: '经典显著主体分割',
+    runtime: 'models.u2net.runtime',
     inputSize: 320,
     postprocess: { threshold: 0.5, feather: 1, edge_refine: 1 },
   },
   rmbg20: {
     label: 'RMBG-2.0',
     fileTag: 'RMBG20',
-    runtime: 'BRIA 高精度主体分离',
+    runtime: 'models.rmbg20.runtime',
     inputSize: 1024,
     postprocess: { threshold: 0.5, feather: 1, edge_refine: 1 },
   },
   birefnet: {
     label: 'BiRefNet',
     fileTag: 'BiRefNet',
-    runtime: '高分辨率通用主体分离',
+    runtime: 'models.birefnet.runtime',
     inputSize: 1024,
     postprocess: { threshold: 0.5, feather: 1, edge_refine: 1 },
   },
   ben2: {
     label: 'BEN2',
     fileTag: 'BEN2',
-    runtime: '置信引导边缘精修',
+    runtime: 'models.ben2.runtime',
     inputSize: 1024,
     postprocess: { threshold: 0.5, feather: 1, edge_refine: 1, ben2_refine_foreground: false },
     supportsAlphaMatting: false,
@@ -665,7 +762,7 @@ const MODEL_META = {
   inspyrenet: {
     label: 'InSPyReNet',
     fileTag: 'InSPyReNet',
-    runtime: '高分辨率显著目标分离',
+    runtime: 'models.inspyrenet.runtime',
     inputSize: 1024,
     postprocess: { threshold: 0.5, feather: 1, edge_refine: 1, inspyrenet_dynamic_resize: true },
   },
@@ -679,14 +776,14 @@ function renderModelParameterPanel(meta) {
   const title = document.getElementById('modelParamsTitle');
   const body = document.getElementById('modelParamsBody');
   if (!body) return;
-  if (title) title.textContent = '边缘优化';
+  if (title) title.textContent = t('params.edgeTitle');
   body.replaceChildren();
 
   const values = modelPostParams[activeModelId] || meta.postprocess;
   const controls = [
-    { id: 'thresholdRange', numberId: 'thresholdValue', label: '前景阈值', hint: '提高可收紧主体范围', value: values.threshold, min: 0, max: 1, step: 0.01, key: 'threshold', decimals: 2 },
-    { id: 'featherRange', numberId: 'featherValue', label: '边缘羽化', hint: '柔化透明边缘', value: values.feather, min: 0, max: 15, step: 1, key: 'feather', decimals: 0 },
-    { id: 'edgeRange', numberId: 'edgeValue', label: '边缘细化', hint: '强化主体轮廓', value: values.edge_refine, min: 0, max: 4, step: 1, key: 'edge_refine', decimals: 0 },
+    { id: 'thresholdRange', numberId: 'thresholdValue', label: t('params.threshold'), hint: t('params.thresholdHint'), value: values.threshold, min: 0, max: 1, step: 0.01, key: 'threshold', decimals: 2 },
+    { id: 'featherRange', numberId: 'featherValue', label: t('params.feather'), hint: t('params.featherHint'), value: values.feather, min: 0, max: 15, step: 1, key: 'feather', decimals: 0 },
+    { id: 'edgeRange', numberId: 'edgeValue', label: t('params.refine'), hint: t('params.refineHint'), value: values.edge_refine, min: 0, max: 4, step: 1, key: 'edge_refine', decimals: 0 },
   ];
   controls.forEach((item) => {
     const control = document.createElement('div');
@@ -732,8 +829,8 @@ function renderModelParameterPanel(meta) {
     appendModelToggle(
       'ben2RefineForeground',
       'ben2_refine_foreground',
-      'BEN2 前景精修',
-      '官方前景重建，改善发丝与半透明边缘；会增加处理时间',
+      t('params.ben2Title'),
+      t('params.ben2Hint'),
       values.ben2_refine_foreground
     );
   }
@@ -741,8 +838,8 @@ function renderModelParameterPanel(meta) {
     appendModelToggle(
       'inspyrenetDynamicResize',
       'inspyrenet_dynamic_resize',
-      '动态细节推理',
-      '按原图比例推理以保留细节；超大图会更耗时并占用更多显存',
+      t('params.inspyrenetTitle'),
+      t('params.inspyrenetHint'),
       values.inspyrenet_dynamic_resize !== false
     );
   }
@@ -751,7 +848,7 @@ function renderModelParameterPanel(meta) {
 
   const alphaControl = document.createElement('div');
   alphaControl.className = 'alpha-matting-control is-ready';
-  alphaControl.innerHTML = '<div class="alpha-matting-head"><div class="alpha-matting-title"><strong>Alpha Matting 精修</strong><small>适用于发丝、薄纱等半透明边缘</small></div><label class="alpha-matting-toggle" for="alphaMattingEnabled" aria-label="启用 Alpha Matting 精修"><input id="alphaMattingEnabled" type="checkbox" /><span class="alpha-matting-switch" aria-hidden="true"></span></label></div><div class="alpha-matting-settings"><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingForegroundRange"><span>确定前景</span><small>高于此值保留主体</small></label><input id="alphaMattingForegroundValue" class="param-number" type="number" min="1" max="255" step="1" /></div><input id="alphaMattingForegroundRange" type="range" class="param-slider" min="1" max="255" step="1" /></div><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingBackgroundRange"><span>确定背景</span><small>低于此值视为背景</small></label><input id="alphaMattingBackgroundValue" class="param-number" type="number" min="0" max="254" step="1" /></div><input id="alphaMattingBackgroundRange" type="range" class="param-slider" min="0" max="254" step="1" /></div><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingErodeRange"><span>边缘收缩</span><small>收紧不确定的边缘</small></label><input id="alphaMattingErodeValue" class="param-number" type="number" min="0" max="30" step="1" /></div><input id="alphaMattingErodeRange" type="range" class="param-slider" min="0" max="30" step="1" /></div></div>';
+  alphaControl.innerHTML = '<div class="alpha-matting-head"><div class="alpha-matting-title"><strong>' + t('params.alphaTitle') + '</strong><small>' + t('params.alphaHint') + '</small></div><label class="alpha-matting-toggle" for="alphaMattingEnabled" aria-label="' + t('params.alphaTitle') + '"><input id="alphaMattingEnabled" type="checkbox" /><span class="alpha-matting-switch" aria-hidden="true"></span></label></div><div class="alpha-matting-settings"><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingForegroundRange"><span>' + t('params.foreground') + '</span><small>' + t('params.foregroundHint') + '</small></label><input id="alphaMattingForegroundValue" class="param-number" type="number" min="1" max="255" step="1" /></div><input id="alphaMattingForegroundRange" type="range" class="param-slider" min="1" max="255" step="1" /></div><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingBackgroundRange"><span>' + t('params.background') + '</span><small>' + t('params.backgroundHint') + '</small></label><input id="alphaMattingBackgroundValue" class="param-number" type="number" min="0" max="254" step="1" /></div><input id="alphaMattingBackgroundRange" type="range" class="param-slider" min="0" max="254" step="1" /></div><div class="alpha-matting-setting"><div class="parameter-head"><label class="parameter-label" for="alphaMattingErodeRange"><span>' + t('params.erode') + '</span><small>' + t('params.erodeHint') + '</small></label><input id="alphaMattingErodeValue" class="param-number" type="number" min="0" max="30" step="1" /></div><input id="alphaMattingErodeRange" type="range" class="param-slider" min="0" max="30" step="1" /></div></div>';
   body.append(alphaControl);
 
   const alphaEnabled = alphaControl.querySelector('#alphaMattingEnabled');
@@ -826,14 +923,14 @@ function updateModelSelection(tab, notifyUnavailable = false) {
   const startBtn = document.getElementById('startBtn');
   if (note) {
     note.classList.remove('is-ready');
-    note.title = meta.label + ' 正在检测本地模型';
+    note.title = meta.label + ' ' + t('modelStatus.checkingTitle');
     const text = note.querySelector('.runtime-inline-text');
-    if (text) text.textContent = meta.label + ' · 检测中';
+    if (text) text.textContent = meta.label + ' · ' + t('modelStatus.checking');
   }
   if (startBtn && document.body.dataset.removeBgPending !== '1') startBtn.disabled = !backendReady;
   setStartButtonLabel(getStartActionLabel());
   refreshDeviceStatus().then((status) => renderModelRuntimeStatus(status)).catch(() => {});
-  if (notifyUnavailable) toast('success', '已切换至 ' + meta.label + '。');
+  if (notifyUnavailable) toast('success', meta.label + ' · ' + t('modelStatus.local'));
 }
 
 function renderModelRuntimeStatus(status) {
@@ -842,9 +939,9 @@ function renderModelRuntimeStatus(status) {
   if (!note || !meta || !status || status.model_id !== activeModelId) return;
   const ready = Boolean(status.model_cached);
   note.classList.toggle('is-ready', ready);
-  note.title = ready ? meta.label + ' 已在本地就绪' : meta.label + ' 需要下载模型';
+  note.title = ready ? meta.label + ' ' + t('modelStatus.readyTitle') : meta.label + ' ' + t('modelStatus.neededTitle');
   const text = note.querySelector('.runtime-inline-text');
-  if (text) text.textContent = ready ? meta.label + ' · 本地' : meta.label + ' · 需下载';
+  if (text) text.textContent = ready ? meta.label + ' · ' + t('modelStatus.local') : meta.label + ' · ' + t('modelStatus.needed');
 }
 
 function initModelSwitcher() {
@@ -978,8 +1075,8 @@ function getModelDownloadSources(info) {
   };
   const global = sources.find((source) => source && source.id === 'global') || {
     id: 'global',
-    title: '国外官方',
-    name: '暂未提供国外官方来源',
+    title: t('downloads.global'),
+    name: t('downloads.noGlobal'),
     url: '',
   };
   return { domestic, global };
@@ -993,14 +1090,14 @@ function updateModelDownloadDialog(info) {
   const path = document.getElementById('modelDownloadPath');
   const fileList = document.querySelector('.model-file-list');
   const sources = getModelDownloadSources(info);
-  if (title) title.textContent = '需要下载 ' + ((info && info.model_label) || (MODEL_META[activeModelId] && MODEL_META[activeModelId].label) || '模型') + ' 模型';
+  if (title) title.textContent = t('downloads.title', { model: (info && info.model_label) || (MODEL_META[activeModelId] && MODEL_META[activeModelId].label) || '—' });
   if (domesticSource) domesticSource.textContent = sources.domestic.name || 'ModelScope 国内镜像';
-  if (globalSource) globalSource.textContent = sources.global.name || '暂未提供国外官方来源';
-  if (path) path.textContent = (info && info.target_dir) || '请先确认模型缓存目录';
+  if (globalSource) globalSource.textContent = sources.global.name || t('downloads.noGlobal');
+  if (path) path.textContent = (info && info.target_dir) || t('downloads.cacheUnavailable');
   if (fileList && info && Array.isArray(info.required_files) && info.required_files.length) {
     fileList.replaceChildren(...info.required_files.map((name) => {
       const item = document.createElement('span');
-      item.textContent = name === 'model.safetensors' ? name + '（大文件，请预留空间）' : name;
+      item.textContent = name === 'model.safetensors' ? name + t('downloads.largeFile') : name;
       return item;
     }));
   }
@@ -1018,7 +1115,7 @@ async function openActiveModelDownloadDialog() {
     return false;
   }
   if (status.model_cached) {
-    toast('success', '当前模型文件已就绪。');
+    toast('success', t('downloads.ready'));
     return true;
   }
   updateModelDownloadDialog(status.model_download || { target_dir: status.model_cache_dir });
@@ -1030,11 +1127,11 @@ function openModelDownloadSource(sourceId) {
   const source = getModelDownloadSources(lastModelDownloadInfo)[sourceId];
   const url = source && typeof source.url === 'string' ? source.url.trim() : '';
   if (!url) {
-    toast('warn', '当前模型暂未提供此下载来源。');
+    toast('warn', t('downloads.noSource'));
     return;
   }
   if (window.backendAPI && typeof window.backendAPI.openExternal === 'function') {
-    window.backendAPI.openExternal(url).catch(() => toast('danger', '无法打开下载网页，请复制链接后在浏览器中访问。'));
+    window.backendAPI.openExternal(url).catch(() => toast('danger', t('downloads.cannotOpen')));
   } else {
     window.open(url, '_blank', 'noopener');
   }
@@ -1052,8 +1149,8 @@ function setAutoDownloadButton(label, downloading = false) {
   if (cancelButton) {
     cancelButton.disabled = downloadCancellationPending;
     cancelButton.textContent = downloading
-      ? (downloadCancellationPending ? '正在取消…' : '取消下载')
-      : '暂不下载';
+      ? (downloadCancellationPending ? t('downloads.cancelling') : t('downloads.cancel'))
+      : t('downloads.notNow');
   }
   const checkButton = document.getElementById('checkModelBtn');
   if (checkButton) checkButton.disabled = downloading;
@@ -1063,7 +1160,7 @@ function finishModelDownload(message, level = 'danger') {
   closeEventSource(downloadEventSource);
   downloadEventSource = null;
   downloadCancellationPending = false;
-  setAutoDownloadButton('自动下载');
+  setAutoDownloadButton(t('downloads.auto'));
   const startBtn = document.getElementById('startBtn');
   if (startBtn) {
     startBtn.disabled = !backendReady || !activeModelIsReady();
@@ -1080,7 +1177,7 @@ async function cancelModelDownload() {
   if (downloadCancellationPending) return;
 
   downloadCancellationPending = true;
-  setAutoDownloadButton('正在停止下载…', true);
+  setAutoDownloadButton(t('downloads.stopping'), true);
   try {
     const response = await fetch(baseUrl + '/api/download/cancel', {
       method: 'POST',
@@ -1095,18 +1192,18 @@ async function cancelModelDownload() {
     closeEventSource(downloadEventSource);
     downloadEventSource = null;
     downloadCancellationPending = false;
-    setAutoDownloadButton('自动下载');
+    setAutoDownloadButton(t('downloads.auto'));
     const startBtn = document.getElementById('startBtn');
     if (startBtn) {
       startBtn.disabled = !backendReady || !activeModelIsReady();
       setStartButtonLabel(getStartActionLabel());
     }
     closeModal('downloadModal');
-    toast('info', payload.message || '下载已取消，未完成文件已清理。');
+    toast('info', payload.message || t('downloads.cancelled'));
   } catch (error) {
     downloadCancellationPending = false;
     // 不关闭 SSE，用户可再次取消或继续等待；避免网络瞬断时让后台下载失去可见状态。
-    setAutoDownloadButton('下载中（取消未确认）', true);
+    setAutoDownloadButton(t('downloads.unconfirmed'), true);
     toast('danger', (error && error.message) || '无法确认取消下载，请重试。');
   }
 }
@@ -1116,10 +1213,10 @@ function beginModelDownload() {
   let completed = false;
   downloadCancellationPending = false;
   // 下载过程保留弹窗，只让弹窗中的确认按钮展示真实进度；不触发右侧处理动画。
-  setAutoDownloadButton('正在连接 0%', true);
+  setAutoDownloadButton(t('downloads.connecting', { percent: 0 }), true);
   if (startBtn) {
     startBtn.disabled = true;
-    setStartButtonLabel('等待模型下载');
+    setStartButtonLabel(t('downloads.waitModel'));
   }
 
   closeEventSource(downloadEventSource);
@@ -1130,7 +1227,7 @@ function beginModelDownload() {
       try {
         const data = JSON.parse(ev.data);
         if (data.event === 'progress') {
-          setAutoDownloadButton('下载中 ' + Math.round(data.percent || 0) + '%', true);
+          setAutoDownloadButton(t('downloads.downloading', { percent: Math.round(data.percent || 0) }), true);
         } else if (data.event === 'error') {
           completed = true;
           finishModelDownload(data.message || t('errors.downloadError'));
@@ -1138,7 +1235,7 @@ function beginModelDownload() {
           completed = true;
           closeEventSource(downloadEventSource);
           downloadEventSource = null;
-          setAutoDownloadButton('下载完成');
+          setAutoDownloadButton(t('downloads.complete'));
           window.setTimeout(() => {
             closeModal('downloadModal');
             if (batchFiles.length) beginBatchRemoveBg(batchFiles);
@@ -1146,7 +1243,7 @@ function beginModelDownload() {
           }, 260);
         } else if (data.event === 'cancelled') {
           completed = true;
-          finishModelDownload(data.message || '下载已取消，未完成文件已清理。', 'info');
+          finishModelDownload(data.message || t('downloads.cancelled'), 'info');
         }
       } catch (_) {
         completed = true;
@@ -1154,10 +1251,10 @@ function beginModelDownload() {
       }
     });
     downloadEventSource.addEventListener('error', () => {
-      if (!completed && !downloadCancellationPending) finishModelDownload('模型下载连接中断，请重试或改为手动下载。');
+      if (!completed && !downloadCancellationPending) finishModelDownload(t('downloads.interrupted'));
     });
   } catch (_) {
-    finishModelDownload('无法创建下载连接，请使用 ModelScope 手动下载。');
+    finishModelDownload(t('downloads.cannotConnect'));
   }
 }
 
@@ -1654,8 +1751,8 @@ function setSelectedDevice(value) {
   const trigger = document.getElementById('deviceSelectTrigger');
   const text = document.getElementById('deviceSelectValue');
   const labels = {
-    cuda: '使用 CUDA 加速',
-    cpu: '仅使用 CPU',
+    cuda: t('settings.usingCuda'),
+    cpu: t('settings.usingCpu'),
   };
   if (trigger) trigger.dataset.value = device;
   if (text) text.textContent = labels[device];
@@ -1774,11 +1871,11 @@ function renderDeviceStatus(info) {
   box.classList.toggle('is-gpu', usingGpu);
   box.classList.toggle('is-cpu', !usingGpu);
   if (usingGpu) {
-    title.textContent = '实际推理设备：GPU · ' + gpuName;
-    detail.textContent = 'PyTorch ' + (info.torch_version || '') + ' · CUDA ' + (info.cuda_build || '已启用');
+    title.textContent = t('settings.gpuActive', { name: gpuName });
+    detail.textContent = t('settings.gpuDetail', { torch: info.torch_version || '', cuda: info.cuda_build || t('settings.enabled') });
   } else {
-    title.textContent = requested === 'cpu' ? '实际推理设备：CPU（已按设置）' : '实际推理设备：CPU（GPU 不可用）';
-    detail.textContent = info.fallback_reason || ('PyTorch ' + (info.torch_version || '未检测到'));
+    title.textContent = requested === 'cpu' ? t('settings.cpuActive') : t('settings.cpuFallback');
+    detail.textContent = info.fallback_reason || ('PyTorch ' + (info.torch_version || t('settings.notDetected')));
   }
   if (cudaOption) {
     // Keep CUDA selectable in the CPU base edition: choosing it opens the
@@ -1796,7 +1893,7 @@ async function refreshDeviceStatus() {
     renderModelRuntimeStatus(status);
     return status;
   } catch (_) {
-    renderDeviceStatus({ requested_device: 'cpu', actual_device: 'cpu', fallback_reason: '后端未连接，暂时无法检测设备' });
+    renderDeviceStatus({ requested_device: 'cpu', actual_device: 'cpu', fallback_reason: t('settings.backendUnavailable') });
     return null;
   }
 }
@@ -1982,10 +2079,10 @@ function initBackendStatus() {
 }
 
 // ============== 启动 ==============
-async function loadI18n() {
-  // Strategy: try three layers so i18n works EVERYWHERE (dev Vite, packaged
-  // app.asar file://, manual browser open of dist/index.html) and NEVER lets
-  // the user see raw keys like "topbar.title" or "startBtn".
+async function loadI18n(locale = currentLocale) {
+  const nextLocale = normalizeLocale(locale);
+  // Strategy: try two layers so i18n works in Vite development, packaged
+  // app.asar file://, and manual browser opening of dist/index.html.
   //
   //   1) <script type="application/json"> inlined by vite.config.js (build + dev)
   //      -> zero network, zero 404, zero CORS on file:// URLs.
@@ -1994,12 +2091,12 @@ async function loadI18n() {
   //   3) If both fail: do NOT call applyI18n at all -> index.html already carries
   //      Chinese innerHTML fallbacks inside every [data-i18n] element, so the UI
   //      remains 100% Chinese. This protects against unknown packaging issues.
-  const INLINE_ID = 'inline-json-i18n-zh-CN-json';
+  const INLINE_ID = 'inline-json-i18n-' + nextLocale.replace(/[^a-zA-Z0-9]/g, '-') + '-json';
   let inlineNode = null;
   try {
-    // Find by exact id first; fall back to scanning any <script> for i18n/zh-CN.
+    // Find by exact id first; the data-src fallback supports old build output.
     inlineNode = document.getElementById(INLINE_ID)
-      || Array.from(document.querySelectorAll('script[type="application/json"][data-src*="zh-CN"]'))[0]
+      || Array.from(document.querySelectorAll('script[type="application/json"][data-src*="' + nextLocale + '"]'))[0]
       || null;
   } catch (_) { /* ignore */ }
 
@@ -2021,7 +2118,7 @@ async function loadI18n() {
     // a newly-compiled language file (instead of serving a stale cached copy
     // from Chromium's file:// cache after an upgrade).
     const bust = '?v=' + (window.i18nBuildStamp || new Date().getTime());
-    const resp = await fetch('./i18n/zh-CN.json' + bust);
+    const resp = await fetch('./i18n/' + nextLocale + '.json' + bust);
     if (resp.ok) {
       const parsed = await resp.json();
       if (parsed && typeof parsed === 'object' && Object.keys(parsed).length) {
@@ -2037,19 +2134,7 @@ async function loadI18n() {
 }
 
 async function bootstrap() {
-  const loaded = await loadI18n();
-  // Only replace element text if the dictionary was loaded successfully.
-  // Otherwise keep the Chinese innerHTML fallbacks that are baked into index.html.
-  if (loaded) {
-    try { applyI18n(); } catch (e) { console.error('applyI18n failed', e); }
-  } else {
-    console.warn('[i18n] no dictionary loaded; keeping <html> Chinese fallbacks.');
-    // Still update document title to the explicit Chinese fallback text.
-    const titleAttr = document.querySelector('[data-i18n="topbar.title"]');
-    if (titleAttr && titleAttr.textContent) {
-      document.title = titleAttr.textContent;
-    }
-  }
+  await initializeLanguage();
   try { createIcons({ icons }); } catch (e) { console.warn('[icons] failed to render:', e); }
   loadParams();
   setBackendAvailability(false);

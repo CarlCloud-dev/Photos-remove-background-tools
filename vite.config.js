@@ -3,16 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // ---------------------------------------------------------------------------
-// Plugin 1: 将 zh-CN.json 内容以内联 <script type="application/json"> 的
-//           方式注入 index.html。打包后 Electron 加载 file:// 协议时无需
-//           任何网络请求即可读取中文文案，从根本上杜绝 CORS / 404。
+// Plugin 1: 将语言包以内联 <script type="application/json"> 的方式注入
+// index.html。打包后 Electron 加载 file:// 协议时无需网络请求即可切换语言。
 // ---------------------------------------------------------------------------
 function inlineI18nPlugin() {
   return {
     name: 'inline-i18n-json',
     transformIndexHtml(html) {
       const rendererDir = path.resolve(__dirname, 'renderer');
-      const files = ['i18n/zh-CN.json'];
+      const files = ['i18n/zh-CN.json', 'i18n/en-US.json'];
       const extras = [];
       for (const f of files) {
         const full = path.join(rendererDir, f);

@@ -1,10 +1,11 @@
 {
   "name": "rmbg-desktop",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "整合多种本地模型的智能抠图桌面工具",
   "main": "electron/main.js",
   "config": {
-    "electron_builder_binaries_mirror": "https://npmmirror.com/mirrors/electron-builder-binaries/"
+    "electron_builder_binaries_mirror": "https://npmmirror.com/mirrors/electron-builder-binaries/",
+    "electron_mirror": "https://npmmirror.com/mirrors/electron/"
   },
   "scripts": {
     "dev": "concurrently -k -n VITE,ELECTRON -c blue,green \"vite\" \"wait-on tcp:127.0.0.1:49174 && electron .\"",
